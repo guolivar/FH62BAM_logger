@@ -1,0 +1,9 @@
+/dev/ttyUSB0
+/home/logger/datacpc3022/
+user=USER password=PWD host=HOST.SOME.WHERE dbname=DATABASE port=5432
+408,409,1
+## Only the first lines are processed.
+1 <SERIAL PORT ADDRESS>
+2 <DATA SAVE PATH>
+3 <DATABASE CONNECTION STRING>
+4 <DATABASE INSERT IDs>
