@@ -3,7 +3,7 @@
 import serial # Serial communications
 import time # Timing utilities
 import subprocess # Shell utilities ... compressing data files
-
+import sys # System info to select compression utility
 # Set the time constants
 rec_time=time.gmtime()
 timestamp = time.strftime("%Y/%m/%d %H:%M:%S GMT",rec_time)
@@ -22,6 +22,7 @@ port = settings_file.readline().rstrip('\n')
 # e.g. "/home/logger/datacpc3775/"
 datapath = settings_file.readline().rstrip('\n')
 prev_file_name = datapath+time.strftime("%Y%m%d.txt",rec_time)
+flags = settings_file.readline().rstrip().split(',')
 # psql connection string
 # e.g "user=datauser password=l3tme1n host=penap-data.dyndns.org dbname=didactic port=5432"
 db_conn = settings_file.readline().rstrip('\n')
@@ -155,11 +156,16 @@ while True:
 	current_file.close()
 	file_line = ""
 	bline = bytearray()
+	## Compress data if required
 	# Is it the last minute of the day?
-	if current_file_name != prev_file_name:
-		gzfile = prev_file_name + ".gz"
-		subprocess.call(["7za","a","-tgzip", gzfile, prev_file_name])
-	prev_file_name = current_file_name
+	if flags[1]==1:
+		if current_file_name != prev_file_name:
+			gzfile = prev_file_name + ".gz"
+			if sys.platform.startswith('linux'):
+				subprocess.call(["gzip",prev_file_name])
+			elif sys.platform.startswith('win'):
+				subprocess.call(["7za","a","-tgzip", gzfile, prev_file_name])
+		prev_file_name = current_file_name
 	# Wait until the next second
 	while int(time.time())<=rec_time_s:
 		#wait a few miliseconds
