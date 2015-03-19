@@ -35,7 +35,7 @@ eol = b'\r'
 leneol = len(eol)
 bline = bytearray()
 # Open the serial port and clean the I/O buffer
-ser = serial.Serial(port,115200)
+ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS)
 ser.flushInput()
 ser.flushOutput()
 # Start the logging
