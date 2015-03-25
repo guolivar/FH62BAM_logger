@@ -5,8 +5,8 @@ import time # Timing utilities
 import subprocess # Shell utilities ... compressing data files
 import sys # System info to select compression utility
 # Hard restart every 3600 seconds
-ix=1
-while (ix<=3600):
+while True:
+	ix=1 # Index for the 3600 iterations before restart
 	# Set the time constants
 	rec_time=time.gmtime()
 	timestamp = time.strftime("%Y/%m/%d %H:%M:%S GMT",rec_time)
@@ -34,11 +34,10 @@ while (ix<=3600):
 	params = settings_file.readline().rstrip('\n').split(",")
 	# Close the settings file
 	settings_file.close()
-	# TODO Test the use of readline() instead of identifying the custom end of
-	#	# Hacks to work with custom end of line
-	#	eol = b'\r'
-	#	leneol = len(eol)
-	#	bline = bytearray()
+	# Hacks to work with custom end of line
+	eol = b'\r'
+	leneol = len(eol)
+	bline = bytearray()
 	# Open the serial port and clean the I/O buffer
 	ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS)
 	ser.flushInput()
@@ -51,101 +50,101 @@ while (ix<=3600):
 		timestamp = time.strftime("%Y/%m/%d %H:%M:%S GMT",rec_time)
 		# Change the counters' display to show the time
 		ser.write('WLogging\r')
-		dump_me = ser.readline()
+		dump_me = ser.read(3)
 		
 		# Request display concentration from the instrument
 		ser.write('RD\r')
 		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
 		# Parse the data line
-		#file_line = bline.decode("utf-8")[:-leneol]
-		#concentration = eval(bline.decode("utf-8")[:-leneol])
-		file_line = ser.readline().rstrip()
-		concentration = eval(file_line)
+		file_line = bline.decode("utf-8")[:-leneol]
+		concentration = eval(bline.decode("utf-8")[:-leneol])
+		#file_line = ser.readline().rstrip()
+		#concentration = eval(file_line)
 
 		# Request Liquid Level from the instrument
 		ser.write('R0\r')
-		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
-		## Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#liq_OK = bline.decode("utf-8")[:-leneol]=='FULL'
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		liq_OK = response == "FULL"
+		# Get data from the instrument
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
+		# Parse the response
+		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		liq_OK = bline.decode("utf-8")[:-leneol]=='FULL'
+		#response = ser.readline ().rstrip()
+		#file_line = file_line + ',' + response
+		#liq_OK = response == "FULL"
 
 		# Request CondT from the instrument
 		ser.write('R1\r')
-		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
-		## Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#CondT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		CondT = eval(response)
+		# Get data from the instrument
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
+		# Parse the response
+		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		CondT = eval(bline.decode("utf-8")[:-leneol])
+		#response = ser.readline ().rstrip()
+		#file_line = file_line + ',' + response
+		#CondT = eval(response)
 
 		# Request SatT from the instrument
 		ser.write('R2\r')
-		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
-		## Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#SatT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		SatT = eval(response)
+		# Get data from the instrument
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
+		# Parse the response
+		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		SatT = eval(bline.decode("utf-8")[:-leneol])
+		#response = ser.readline ().rstrip()
+		#file_line = file_line + ',' + response
+		#SatT = eval(response)
 		
 		# Request OptT from the instrument
 		ser.write('R3\r')
-		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
-		## Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#OptT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		OptT = eval(response)
+		# Get data from the instrument
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
+		# Parse the response
+		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		OptT = eval(bline.decode("utf-8")[:-leneol])
+		#response = ser.readline ().rstrip()
+		#file_line = file_line + ',' + response
+		#OptT = eval(response)
 		
 		# Request flow from the instrument
 		ser.write('R4\r')
-		## Get data from the instrument
-		#while True:
-		#	c = ser.read(1)
-		#	bline += c
-		#	if bline[-leneol:] == eol:
-		#		break
-		## Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#flow = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		flow = eval(response)
+		# Get data from the instrument
+		while True:
+			c = ser.read(1)
+			bline += c
+			if bline[-leneol:] == eol:
+				break
+		# Parse the response
+		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		flow = eval(bline.decode("utf-8")[:-leneol])
+		#response = ser.readline ().rstrip()
+		#file_line = file_line + ',' + response
+		#flow = eval(response)
 		
 		# Restore instrument display
 		ser.write('W\r')
-		#dump_me = ser.read(3)
-		dump_me = ser.readline()
+		dump_me = ser.read(3)
+		#dump_me = ser.readline()
 		
 		split_indx = file_line.find(',')
 		error_message = file_line[split_indx+1:]
