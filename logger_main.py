@@ -49,101 +49,101 @@ while True:
 		rec_time=time.gmtime()
 		timestamp = time.strftime("%Y/%m/%d %H:%M:%S GMT",rec_time)
 		# Change the counters' display to show the time
-		ser.write('WLogging\r')
-		dump_me = ser.read(3)
+		#ser.write('WLogging\r')
+		#dump_me = ser.readline()
 		
 		# Request display concentration from the instrument
 		ser.write('RD\r')
 		## Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the data line
-		file_line = bline.decode("utf-8")[:-leneol]
-		concentration = eval(bline.decode("utf-8")[:-leneol])
-		#file_line = ser.readline().rstrip()
-		#concentration = eval(file_line)
-
+		#file_line = bline.decode("utf-8")[:-leneol]
+		#concentration = eval(bline.decode("utf-8")[:-leneol])
+		file_line = ser.readline().rstrip()
+		concentration = eval(file_line)
+		
 		# Request Liquid Level from the instrument
 		ser.write('R0\r')
 		# Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the response
-		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		liq_OK = bline.decode("utf-8")[:-leneol]=='FULL'
-		#response = ser.readline ().rstrip()
-		#file_line = file_line + ',' + response
-		#liq_OK = response == "FULL"
-
+		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		#liq_OK = bline.decode("utf-8")[:-leneol]=='FULL'
+		response = ser.readline ().rstrip()
+		file_line = file_line + ',' + response
+		liq_OK = response[0] == "F"
+		
 		# Request CondT from the instrument
 		ser.write('R1\r')
 		# Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the response
-		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		CondT = eval(bline.decode("utf-8")[:-leneol])
-		#response = ser.readline ().rstrip()
-		#file_line = file_line + ',' + response
-		#CondT = eval(response)
-
+		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		#CondT = eval(bline.decode("utf-8")[:-leneol])
+		response = ser.readline ().rstrip()
+		file_line = file_line + ',' + response
+		CondT = eval(response)
+		
 		# Request SatT from the instrument
 		ser.write('R2\r')
 		# Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the response
-		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		SatT = eval(bline.decode("utf-8")[:-leneol])
-		#response = ser.readline ().rstrip()
-		#file_line = file_line + ',' + response
-		#SatT = eval(response)
+		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		#SatT = eval(bline.decode("utf-8")[:-leneol])
+		response = ser.readline ().rstrip()
+		file_line = file_line + ',' + response
+		SatT = eval(response)
 		
 		# Request OptT from the instrument
 		ser.write('R3\r')
 		# Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the response
-		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		OptT = eval(bline.decode("utf-8")[:-leneol])
-		#response = ser.readline ().rstrip()
-		#file_line = file_line + ',' + response
-		#OptT = eval(response)
+		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		#OptT = eval(bline.decode("utf-8")[:-leneol])
+		response = ser.readline ().rstrip()
+		file_line = file_line + ',' + response
+		OptT = eval(response)
 		
 		# Request flow from the instrument
 		ser.write('R4\r')
 		# Get data from the instrument
-		while True:
-			c = ser.read(1)
-			bline += c
-			if bline[-leneol:] == eol:
-				break
+		#while True:
+			#c = ser.read(1)
+			#bline += c
+			#if bline[-leneol:] == eol:
+				#break
 		# Parse the response
-		file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		flow = eval(bline.decode("utf-8")[:-leneol])
-		#response = ser.readline ().rstrip()
-		#file_line = file_line + ',' + response
-		#flow = eval(response)
+		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
+		#flow = eval(bline.decode("utf-8")[:-leneol])
+		response = ser.readline ().rstrip()
+		file_line = file_line + ',' + response
+		flow = eval(response)
 		
 		# Restore instrument display
-		ser.write('W\r')
-		dump_me = ser.read(3)
+		#ser.write('W\r')
+		#dump_me = ser.read(3)
 		#dump_me = ser.readline()
 		
 		split_indx = file_line.find(',')
