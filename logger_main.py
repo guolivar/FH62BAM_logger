@@ -21,9 +21,11 @@ while True:
 	settings_file = open("./settings.txt")
 	# e.g. "/dev/ttyUSB0"
 	port = settings_file.readline().rstrip('\n')
+	print(port)
 	# path for data files
 	# e.g. "/home/logger/datacpc3775/"
 	datapath = settings_file.readline().rstrip('\n')
+	print(datapath)
 	prev_file_name = datapath+time.strftime("%Y%m%d.txt",rec_time)
 	flags = settings_file.readline().rstrip().split(',')
 	# psql connection string
@@ -38,10 +40,15 @@ while True:
 	eol = b'\r'
 	leneol = len(eol)
 	bline = bytearray()
+	print('Setting up Serial Port')
 	# Open the serial port and clean the I/O buffer
-	ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS)
-	ser.flushInput()
-	ser.flushOutput()
+	ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS, rtscts=1, stopbits=2)
+	#ser.flushInput()
+	#ser.flushOutput()
+	print('Writing #')
+	ser.write('#\r')
+	file_line = ser.readline().rstrip()
+	print(file_line)
 	# Start the logging
 	while (ix<=3600):
 		# Set the time for the record
@@ -51,9 +58,9 @@ while True:
 		# Change the counters' display to show the time
 		#ser.write('WLogging\r')
 		#dump_me = ser.readline()
-		
+
 		# Request display concentration from the instrument
-		ser.write('RD\r')
+		ser.write('C\r')
 		## Get data from the instrument
 		#while True:
 			#c = ser.read(1)
@@ -64,90 +71,8 @@ while True:
 		#file_line = bline.decode("utf-8")[:-leneol]
 		#concentration = eval(bline.decode("utf-8")[:-leneol])
 		file_line = ser.readline().rstrip()
-		concentration = eval(file_line)
-		
-		# Request Liquid Level from the instrument
-		ser.write('R0\r')
-		# Get data from the instrument
-		#while True:
-			#c = ser.read(1)
-			#bline += c
-			#if bline[-leneol:] == eol:
-				#break
-		# Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#liq_OK = bline.decode("utf-8")[:-leneol]=='FULL'
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		liq_OK = response[0] == "F"
-		
-		# Request CondT from the instrument
-		ser.write('R1\r')
-		# Get data from the instrument
-		#while True:
-			#c = ser.read(1)
-			#bline += c
-			#if bline[-leneol:] == eol:
-				#break
-		# Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#CondT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		CondT = eval(response)
-		
-		# Request SatT from the instrument
-		ser.write('R2\r')
-		# Get data from the instrument
-		#while True:
-			#c = ser.read(1)
-			#bline += c
-			#if bline[-leneol:] == eol:
-				#break
-		# Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#SatT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		SatT = eval(response)
-		
-		# Request OptT from the instrument
-		ser.write('R3\r')
-		# Get data from the instrument
-		#while True:
-			#c = ser.read(1)
-			#bline += c
-			#if bline[-leneol:] == eol:
-				#break
-		# Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#OptT = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		OptT = eval(response)
-		
-		# Request flow from the instrument
-		ser.write('R4\r')
-		# Get data from the instrument
-		#while True:
-			#c = ser.read(1)
-			#bline += c
-			#if bline[-leneol:] == eol:
-				#break
-		# Parse the response
-		#file_line = file_line + ',' + bline.decode("utf-8")[:-leneol]
-		#flow = eval(bline.decode("utf-8")[:-leneol])
-		response = ser.readline ().rstrip()
-		file_line = file_line + ',' + response
-		flow = eval(response)
-		
-		# Restore instrument display
-		#ser.write('W\r')
-		#dump_me = ser.read(3)
-		#dump_me = ser.readline()
-		
-		split_indx = file_line.find(',')
-		error_message = file_line[split_indx+1:]
+		print(file_line)
+		#concentration = eval(file_line)
 		# Make the line pretty for the file
 		file_line = timestamp+','+file_line
 		# Save it to the appropriate file
