@@ -1,5 +1,5 @@
-# CPC3022_logger
-Python utilities to read the output from a TSI CPC3022 and upload data to a PostgreSQL database.
+# FH62C14 logger
+Python utilities to read the output from a Thermo Scientific FH62C15 and upload data to a PostgreSQL database.
 ## Modules required
 * **pyserial**
 * **psycopg2**
