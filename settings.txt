@@ -1,5 +1,5 @@
 /dev/ttyUSB0
-./
+./data
 local,1
 user=USER password=PWD host=HOST.SOME.WHERE dbname=DATABASE port=5432
 408,409,1
