@@ -4,6 +4,7 @@ import serial # Serial communications
 import time # Timing utilities
 import subprocess # Shell utilities ... compressing data files
 import sys # System info to select compression utility
+
 # Hard restart every 3600 seconds
 while True:
 	ix=1 # Index for the 3600 iterations before restart
