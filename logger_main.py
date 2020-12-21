@@ -3,8 +3,31 @@
 import serial # Serial communications
 import time # Timing utilities
 import subprocess # Shell utilities ... compressing data files
-import httplib, urllib   # http and url libs used for HTTP POSTs
 import os,sys           # OS utils to keep working directory
+import paho.mqtt.client as mqtt # MQTT publishing
+import boto3 # AWS client
+from botocore.config import Config # Configure AWS client
+
+aws_secrets = open("./secret_aws.txt")
+aws_cred = aws_secrets.readline().split(';')
+
+my_S3_config = Config(
+    region_name = 'ap-southeast-2',
+    signature_version = 'v4',
+    retries = {
+        'max_attempts': 10,
+        'mode': 'standard'
+    }
+)
+
+clientS3 = boto3.client(
+    's3',
+    aws_access_key_id=aws_cred[0],
+    aws_secret_access_key=aws_cred[1],
+	config = my_S3_config
+)
+# Let's use Amazon S3
+s3 = boto3.resource('s3')
 
 # Change working directory to the script's path
 os.chdir(os.path.dirname(sys.argv[0]))
@@ -35,29 +58,34 @@ current_file.write(timestamp + " " + flags[0] + "\n")
 current_file.flush()
 current_file.close()
 
-# Phant address
-phant_server = settings_file.readline().rstrip('\n')
-# Phant publicKey
-publickey = settings_file.readline().rstrip('\n')
-# Phant privateKey
-privatekey = settings_file.readline().rstrip('\n')
+# MQTT server address
+mqtt_server = settings_file.readline().rstrip('\n')
+# MQTT topic to publish
+mqtt_topic = settings_file.readline().rstrip('\n')
+# Start the MQTT client
+client = mqtt.Client()
+client.connect(mqtt_server,1883)
 
 # Close the settings file
 settings_file.close()
 
+# Start at the beginning of the minute
+while time.gmtime().tm_sec > 0:
+	time.sleep(0.05)
+	time.gmtime().tm_sec
 # Start the logging
 while True:
 	try:
-		print('Setting up Serial Port')
-		# Open the serial port and clean the I/O buffer
-		ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS, rtscts=1, stopbits=2)
-		ser.flushInput()
-		ser.flushOutput()
 		# Set the time for the record
 		rec_time=time.gmtime()
 		# Set the time for the next record (add seconds to current time)
 		rec_time_s = int(time.time()) + 60
 		timestamp = time.strftime("%Y/%m/%d %H:%M:%S GMT",rec_time)
+		print('Setting up Serial Port')
+		# Open the serial port and clean the I/O buffer
+		ser = serial.Serial(port,9600,parity = serial.PARITY_EVEN,bytesize = serial.SEVENBITS, rtscts=1, stopbits=2)
+		ser.flushInput()
+		ser.flushOutput()
 		# Set concentration to ERROR
 		concentration = -999
 		# Request current reading from the instrument
@@ -98,55 +126,9 @@ while True:
 		current_file.flush()
 		current_file.close()
 		file_line = ""
-
-		#Send concentration only data to Phant phant_server
+		#Send concentration only data to mqtt_server
 		print("Sending an update!")
-	    # Our first job is to create the data set. Should turn into
-	    # something like "light=1234&switch=0&name=raspberrypi"
-	    # fields = ["co", "no2", "co_t", "no2_t", "serial_co", "serial_no2"]
-	    data = {} # Create empty set, then fill in with our three fields:
-	    # Field 0, co
-	    data[fields[0]] = concentration
-
-	    # Next, we need to encode that data into a url format:
-	    params = urllib.urlencode(data)
-
-	    # Now we need to set up our headers:
-	    headers = {} # start with an empty set
-	    # These are static, should be there every time:
-	    headers["Content-Type"] = "application/x-www-form-urlencoded"
-	    headers["Connection"] = "close"
-	    headers["Content-Length"] = len(params) # length of data
-	    headers["Phant-Private-Key"] = privatekey # private key header
-
-	    # This is very breakable so we try to catch the upload errors
-		# First check PING to google for connectivity and try upload if connected
-		response = os.system("ping -c 1 www.google.com")
-		if response == 0:
-		    try:
-		        # Now we initiate a connection, and post the data
-		        c = httplib.HTTPConnection(phant_server,8080)
-		        # Here's the magic, our reqeust format is POST, we want
-		        # to send the data to phant.server/input/PUBLIC_KEY.txt
-		        # and include both our data (params) and headers
-		        print(params)
-		        print(headers)
-		        c.request("POST", "/input/" + publickey + ".txt", params, headers)
-		        r = c.getresponse() # Get the server's response and print it
-				current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
-	            current_file = open(current_LOG_name, "a")
-	            current_file.write(timestamp + " Connection error\n")
-	            current_file.write(timestamp + " " + r.status + " " + r.reason)
-	            current_file.flush()
-	            current_file.close()
-		        print r.status, r.reason
-		    except:
-		        print("Connection error. No data upload. Nothing to se here, move along")
-		        current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
-		        current_file = open(current_LOG_name, "a")
-		        current_file.write(timestamp + " Connection error\n")
-		        current_file.flush()
-		        current_file.close()
+		client.publish(mqtt_topic,concentration)
 		## Compress data if required
 		# Is it the last minute of the day?
 		if flags[1]==1:
@@ -156,14 +138,17 @@ while True:
 					subprocess.call(["gzip",prev_file_name])
 				elif sys.platform.startswith('win'):
 					subprocess.call(["7za","a","-tgzip", gzfile, prev_file_name])
-			prev_file_name = current_file_name
+				# Upload a new file
+				data = open(gzfile, 'rb')
+				s3.Bucket('waterview-data-2020-21').put_object(Key='BAM/' + gzfile, Body=data)
+				prev_file_name = current_file_name
 		ser.close()
 	except:
-        current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
-        current_file = open(current_LOG_name, "a")
-        current_file.write(timestamp + " Something unexpected happened and data wasn't logged\n")
-        current_file.flush()
-        current_file.close()
+		current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
+		current_file = open(current_LOG_name, "a")
+		current_file.write(timestamp + " Something unexpected happened and data wasn't logged\n")
+		current_file.flush()
+		current_file.close()
 	# Wait until the next sample time
 	while int(time.time())<=(rec_time_s):
 		#wait a few miliseconds
