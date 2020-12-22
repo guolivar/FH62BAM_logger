@@ -4,9 +4,23 @@ import serial # Serial communications
 import time # Timing utilities
 import subprocess # Shell utilities ... compressing data files
 import os,sys           # OS utils to keep working directory
+import json # To send JSON object to MQTT broker
 import paho.mqtt.client as mqtt # MQTT publishing
 import boto3 # AWS client
 from botocore.config import Config # Configure AWS client
+
+# Manual, more flexible, "serial readline"
+def Serial_Readline(_ser, _eol):
+	leneol = len(_eol)
+	_bline = bytearray()
+	while True:
+		c = _ser.read(1)
+		_bline += c
+		if _bline[-leneol:] == _eol:
+			break
+	## Parse the data line
+	_line = _bline.decode("utf-8").rstrip()
+	return _line
 
 aws_secrets = open("./secret_aws.txt")
 aws_cred = aws_secrets.readline().split(';')
@@ -28,9 +42,6 @@ clientS3 = boto3.client(
 )
 # Let's use Amazon S3
 s3 = boto3.resource('s3')
-
-# Change working directory to the script's path
-os.chdir(os.path.dirname(sys.argv[0]))
 
 # Set the time constants
 rec_time=time.gmtime()
@@ -68,7 +79,8 @@ client.connect(mqtt_server,1883)
 
 # Close the settings file
 settings_file.close()
-
+# Hacks to work with custom end of line
+eol = b'\r\n'
 # Start at the beginning of the minute
 while time.gmtime().tm_sec > 0:
 	time.sleep(0.05)
@@ -89,36 +101,39 @@ while True:
 		# Set concentration to ERROR
 		concentration = -999
 		# Request current reading from the instrument
-		ser.write('C\r')
-		file_line = ser.readline().rstrip()
+		print('Request concentration')
+		ser.write('C\r\n')
+		file_line = Serial_Readline(ser,eol)
 		concentration = eval(file_line)
 		# Request current 30min reading from the instrument
-		ser.write('H\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		print('Request 30min avg')
+		ser.write('H\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current air flow rate
-		ser.write('J2\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('J2\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current T1 (sampling head T)
-		ser.write('JB\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('JB\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current T2 (sampling chamber)
-		ser.write('JC\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('JC\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current T3 (inside monitor)
-		ser.write('JD\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('JD\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current T4 (sampling tube)
-		ser.write('JE\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('JE\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request current operating flow
-		ser.write('JI\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('JI\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Request device status
-		ser.write('#\r')
-		file_line = file_line + ',' + ser.readline().rstrip()
+		ser.write('#\r\n')
+		file_line = file_line + ',' + Serial_Readline(ser,eol)
 		# Make the line pretty for the file
 		file_line = timestamp + ',' + file_line
 		print(file_line)
+		json_line = json.dumps(file_line.split(','))
 		# Save it to the appropriate file
 		current_file_name = datapath+time.strftime("%Y%m%d.txt",rec_time)
 		current_file = open(current_file_name,"a")
@@ -128,7 +143,7 @@ while True:
 		file_line = ""
 		#Send concentration only data to mqtt_server
 		print("Sending an update!")
-		client.publish(mqtt_topic,concentration)
+		client.publish(mqtt_topic,json_line)
 		## Compress data if required
 		# Is it the last minute of the day?
 		if flags[1]==1:
