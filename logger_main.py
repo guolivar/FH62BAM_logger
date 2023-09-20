@@ -125,7 +125,8 @@ while True:
         print("Concentration requested")
         # breakpoint()
         c_read = Serial_Readline(ser, eol)
-        json_line = '{\\"PMnow\\":' + c_read
+        json_line = '{\\"Timestamp\\":' + timestamp
+        json_line = ',\\"PMnow\\":' + c_read
         file_line = c_read
         concentration = eval(file_line)
         print(c_read)
@@ -165,11 +166,11 @@ while True:
         # c_read = Serial_Readline(ser, eol)
         # file_line = file_line + "," + c_read
         # json_line = json_line + ',\\"CurrFlow\\":' + eval(c_read)
-        # # Request device status
-        # ser.write(b"#\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
+        # Request device status
+        ser.write(b"#\r\n")
+        c_read = Serial_Readline(ser, eol)
+        file_line = file_line + "," + c_read
+        json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
         json_line = json_line + "}"
         # Make the line pretty for the file
         file_line = timestamp + "," + file_line
@@ -194,7 +195,7 @@ while True:
                 subprocess.call(["7za", "a", "-tgzip", gzfile, prev_file_name])
             # Upload a new file
             data = open(gzfile, "rb")
-            s3.Bucket("hbrc").put_object(Key="BAM/" + gzfile, Body=data)
+            s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
             prev_file_name = current_file_name
         ser.close()
     except:
