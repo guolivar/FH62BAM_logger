@@ -167,10 +167,10 @@ while True:
         # file_line = file_line + "," + c_read
         # json_line = json_line + ',\\"CurrFlow\\":' + eval(c_read)
         # Request device status
-        ser.write(b"#\r\n")
-        c_read = Serial_Readline(ser, eol)
-        file_line = file_line + "," + c_read
-        json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
+        # ser.write(b"#\r\n")
+        # c_read = Serial_Readline(ser, eol)
+        # file_line = file_line + "," + c_read
+        # json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
         json_line = json_line + "}"
         # Make the line pretty for the file
         file_line = timestamp + "," + file_line
