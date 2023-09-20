@@ -127,8 +127,8 @@ while True:
         print("Concentration requested")
         # breakpoint()
         c_read = Serial_Readline(ser, eol)
-        json_line = '{\\"Timestamp\\":' + timestamp
-        json_line = json_line + ',\\"PMnow\\":' + eval(c_read)
+        json_line = '{\"Timestamp\":\"' + timestamp + '\"'
+        json_line = json_line + ',\"PMnow\":' + eval(c_read)
         file_line = c_read
         concentration = eval(file_line)
         print(c_read)
