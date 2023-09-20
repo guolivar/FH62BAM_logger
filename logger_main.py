@@ -99,10 +99,12 @@ while time.gmtime().tm_sec > 0:
 # Start the logging
 while True:
     try:
+        # Wait until the beginning of the next minute
+        while time.gmtime().tm_sec > 0:
+            time.sleep(0.05)
+            time.gmtime().tm_sec
         # Set the time for the record
         rec_time = time.gmtime()
-        # Set the time for the next record (add seconds to current time)
-        rec_time_s = int(time.time()) + 60
         timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
         print("Setting up Serial Port")
         # Open the serial port and clean the I/O buffer
@@ -126,7 +128,7 @@ while True:
         # breakpoint()
         c_read = Serial_Readline(ser, eol)
         json_line = '{\\"Timestamp\\":' + timestamp
-        json_line = json_line + ',\\"PMnow\\":' + c_read
+        json_line = json_line + ',\\"PMnow\\":' + eval(c_read)
         file_line = c_read
         concentration = eval(file_line)
         print(c_read)
@@ -206,8 +208,4 @@ while True:
         )
         current_file.flush()
         current_file.close()
-    # Wait until the next sample time
-    while int(time.time()) <= (rec_time_s):
-        # wait a few miliseconds
-        time.sleep(0.05)
 print("I'm done now")
