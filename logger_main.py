@@ -118,49 +118,49 @@ while True:
         concentration = -999
         # Request current reading from the instrument
         print("Request concentration")
-        ser.write("C\r\n")
+        ser.write(b"C\r\n")
         c_read = Serial_Readline(ser, eol)
         json_line = '{\\"PMnow\\":' + c_read
         file_line = c_read
         concentration = eval(file_line)
         # Request current 30min reading from the instrument
         print("Request 30min avg")
-        ser.write("H\r\n")
+        ser.write(b"H\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"PM30min\\":' + eval(c_read)
         # Request current air flow rate
-        ser.write("J2\r\n")
+        ser.write(b"J2\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"Airflow\\":' + eval(c_read)
         # Request current T1 (sampling head T)
-        ser.write("JB\r\n")
+        ser.write(b"JB\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"SamplT\\":' + eval(c_read)
         # Request current T2 (sampling chamber)
-        ser.write("JC\r\n")
+        ser.write(b"JC\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"ChambT\\":' + eval(c_read)
         # Request current T3 (inside monitor)
-        ser.write("JD\r\n")
+        ser.write(b"JD\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"MonitT\\":' + eval(c_read)
         # Request current T4 (sampling tube)
-        ser.write("JE\r\n")
+        ser.write(b"JE\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"SampTubeT\\":' + eval(c_read)
         # Request current operating flow
-        ser.write("JI\r\n")
+        ser.write(b"JI\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"CurrFlow\\":' + eval(c_read)
         # Request device status
-        ser.write("#\r\n")
+        ser.write(b"#\r\n")
         c_read = Serial_Readline(ser, eol)
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"DevStatus\\":' + eval(c_read) + "}"
