@@ -1,8 +1,8 @@
-/dev/ttyUSB0
+/dev/ttyUSB_A
 ./data
 local,1
 dusty-acorn.dyndns.org
-waterview/PMBAM
+hbrc/BAM
 ## Only the first lines are processed.
 1 <SERIAL PORT ADDRESS>
 2 <DATA SAVE PATH>
