@@ -6,6 +6,7 @@
 
 
 # Load the libraries
+import pdb  # Debugger
 import serial  # Serial communications
 import time  # Timing utilities
 import subprocess  # Shell utilities ... compressing data files
@@ -94,6 +95,7 @@ eol = b"\r\n"
 while time.gmtime().tm_sec > 0:
     time.sleep(0.05)
     time.gmtime().tm_sec
+breakpoint()
 # Start the logging
 while True:
     try:
@@ -117,8 +119,11 @@ while True:
         # Set concentration to ERROR
         concentration = -999
         # Request current reading from the instrument
+        breakpoint()
         print("Request concentration")
         ser.write(b"C\r\n")
+        print("Concentration requested")
+        breakpoint()
         c_read = Serial_Readline(ser, eol)
         json_line = '{\\"PMnow\\":' + c_read
         file_line = c_read
