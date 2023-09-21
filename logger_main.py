@@ -155,6 +155,10 @@ while True:
         file_line = c_read
         concentration = eval(c_read)
         print(c_read)
+        ser.write(b"#\r\n")
+        c_read = ser.readline().strip()
+        file_line = file_line + "," + c_read
+        json_line = json_line + ',\\"DevStatus\\":' + c_read
         json_line = json_line + "}"
         # Make the line pretty for the file
         file_line = timestamp + "," + file_line
