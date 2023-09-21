@@ -95,10 +95,15 @@ eol = b"\r\n"
 # Start the logging
 while True:
     try:
+        # Wait until the beginning of the next minute
+        while time.gmtime().tm_sec > 0:
+            time.sleep(0.05)
+            time.gmtime().tm_sec
         # Get yesterday's date
         yesterday = datetime.now() - timedelta(days=1)
         filename = yesterday.strftime("%Y%m%d.txt")
         filepath = os.path.join(datapath, filename)
+        print(filepath)
         # Check if the file exists
         if os.path.exists(filepath):
             # Compress the file
@@ -116,10 +121,6 @@ while True:
             shutil.move(gzfile, os.path.join(datapath + "processed/", gzfile))
             # Remove the original file
             os.remove(filepath)
-        # Wait until the beginning of the next minute
-        while time.gmtime().tm_sec > 0:
-            time.sleep(0.05)
-            time.gmtime().tm_sec
         # Set the time for the record
         rec_time = time.gmtime()
         timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
