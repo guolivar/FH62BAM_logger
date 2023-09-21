@@ -95,10 +95,6 @@ eol = b"\r\n"
 # Start the logging
 while True:
     try:
-        # Wait until the beginning of the next minute
-        while time.gmtime().tm_sec > 0:
-            time.sleep(0.05)
-            time.gmtime().tm_sec
         # Get yesterday's date
         yesterday = datetime.now() - timedelta(days=1)
         filename = yesterday.strftime("%Y%m%d.txt")
@@ -117,12 +113,14 @@ while True:
             data = open(gzfile, "rb")
             s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
             print(gzfile)
-            # Move the compressed file to the "processed" folder
-            shutil.move(gzfile, os.path.join(datapath + "processed/", gzfile))
             # Remove the original file
             os.remove(filepath)
         else:
-            print("No previous day file")
+            gzfile="nofile"
+        # Wait until the beginning of the next minute
+        while time.gmtime().tm_sec > 0:
+            time.sleep(0.05)
+            time.gmtime().tm_sec
         # Set the time for the record
         rec_time = time.gmtime()
         timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
