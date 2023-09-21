@@ -156,12 +156,12 @@ while True:
         file_line = c_read
         concentration = eval(c_read)
         print(c_read)
-        # Request current air flow rate
-        ser.write(b"J2\r\n")
-        time.sleep(0.05)
-        c_read = ser.readline().strip().decode('UTF-8')
-        file_line = file_line + "," + c_read
-        json_line = json_line + ',\"Airflow\":' + c_read
+        # # Request current air flow rate
+        # ser.write(b"J2\r\n")
+        # time.sleep(0.05)
+        # c_read = ser.readline().strip().decode('UTF-8')
+        # file_line = file_line + "," + c_read
+        # json_line = json_line + ',\"Airflow\":' + c_read
         # Request DevStatus code
         ser.write(b"#\r\n")
         time.sleep(0.05)
