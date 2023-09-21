@@ -91,11 +91,6 @@ client.connect(mqtt_server, 1883)
 settings_file.close()
 # Hacks to work with custom end of line
 eol = b"\r\n"
-# Start at the beginning of the minute
-while time.gmtime().tm_sec > 0:
-    time.sleep(0.05)
-    time.gmtime().tm_sec
-# breakpoint()
 # Start the logging
 while True:
     try:
@@ -118,6 +113,7 @@ while True:
         )
         ser.flushInput()
         ser.flushOutput()
+        time.sleep(0.05)
         # Set concentration to ERROR
         concentration = -999
         # Request current reading from the instrument
@@ -125,6 +121,7 @@ while True:
         print("Request concentration")
         ser.write(b"C\r\n")
         print("Concentration requested")
+        time.sleep(0.05)
         # breakpoint()
         c_read = Serial_Readline(ser, eol)
         json_line = '{\"Timestamp\":\"' + timestamp + '\"'
@@ -208,4 +205,8 @@ while True:
         )
         current_file.flush()
         current_file.close()
+        # Wait until the beginning of the next minute
+        while time.gmtime().tm_sec > 0:
+            time.sleep(0.05)
+            time.gmtime().tm_sec
 print("I'm done now")
