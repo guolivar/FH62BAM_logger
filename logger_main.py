@@ -95,95 +95,96 @@ settings_file.close()
 eol = b"\r\n"
 # Start the logging
 while True:
-    try:
-        # # Get yesterday's date
-        # yesterday = datetime.now() - timedelta(days=1)
-        # filename = yesterday.strftime("%Y%m%d.txt")
-        # filepath = os.path.join(datapath, filename)
-        # print(filepath)
-        # # Check if the file exists
-        # if os.path.exists(filepath):
-        #     # Compress the file
-        #     # Send file for previous day to S3
-        #     gzfile = filepath + ".gz"
-        #     if sys.platform.startswith("linux"):
-        #         subprocess.call(["gzip", filepath])
-        #     elif sys.platform.startswith("win"):
-        #         subprocess.call(["7za", "a", "-tgzip", gzfile, filepath])
-        #     # Upload a new file
-        #     data = open(gzfile, "rb")
-        #     s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
-        #     print(gzfile)
-        #     # Remove the original file
-        #     os.remove(filepath)
-        # else:
-        #     gzfile = "nofile"
+    # try:
+    # # Get yesterday's date
+    # yesterday = datetime.now() - timedelta(days=1)
+    # filename = yesterday.strftime("%Y%m%d.txt")
+    # filepath = os.path.join(datapath, filename)
+    # print(filepath)
+    # # Check if the file exists
+    # if os.path.exists(filepath):
+    #     # Compress the file
+    #     # Send file for previous day to S3
+    #     gzfile = filepath + ".gz"
+    #     if sys.platform.startswith("linux"):
+    #         subprocess.call(["gzip", filepath])
+    #     elif sys.platform.startswith("win"):
+    #         subprocess.call(["7za", "a", "-tgzip", gzfile, filepath])
+    #     # Upload a new file
+    #     data = open(gzfile, "rb")
+    #     s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
+    #     print(gzfile)
+    #     # Remove the original file
+    #     os.remove(filepath)
+    # else:
+    #     gzfile = "nofile"
 
-        # Wait until the beginning of the next minute
-        while time.gmtime().tm_sec > 0:
-            time.sleep(0.05)
-            time.gmtime().tm_sec
-        # Set the time for the record
-        rec_time = time.gmtime()
-        timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
-        print("Setting up Serial Port")
-        # Open the serial port and clean the I/O buffer
-        ser = serial.Serial(
-            port,
-            9600,
-            parity=serial.PARITY_EVEN,
-            bytesize=serial.SEVENBITS,
-            rtscts=1,
-            stopbits=2,
-            timeout=3,
-        )
-        ser.flushInput()
-        ser.flushOutput()
+    # Wait until the beginning of the next minute
+    while time.gmtime().tm_sec > 0:
         time.sleep(0.05)
-        # Set concentration to ERROR
-        concentration = -999
-        # Request current reading from the instrument
-        # breakpoint()
-        print("Request concentration")
-        ser.write(b"C\r\n")
-        print("Concentration requested")
-        time.sleep(0.05)
-        # breakpoint()
-        # c_read = Serial_Readline(ser, eol)
-        c_read = ser.readline().strip()
-        json_line = '{"Timestamp":"' + timestamp + '"'
-        json_line = json_line + ',"PMnow":' + eval(c_read)
-        file_line = c_read
-        concentration = eval(c_read)
-        time.sleep(0.05)
-        print(c_read)
-        ser.write(b"#\r\n")
-        c_read = ser.readline().strip()
-        file_line = file_line + "," + c_read
-        json_line = json_line + ',\\"DevStatus\\":' + c_read
-        json_line = json_line + "}"
-        ser.close()  # Close the serial port
-        # Make the line pretty for the file
-        file_line = timestamp + "," + file_line
-        print(file_line)
-        # Save it to the appropriate file
-        current_file_name = datapath + time.strftime("%Y%m%d.txt", rec_time)
-        current_file = open(current_file_name, "a")
-        current_file.write(file_line + "\n")
-        current_file.flush()
-        current_file.close()
-        file_line = ""
-        # Send concentration only data to mqtt_server
-        print("Sending an update!")
-        client.publish(mqtt_topic, json_line)
-    except:
-        current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
-        current_file = open(current_LOG_name, "a")
-        current_file.write(
-            timestamp + " Something unexpected happened and data wasn't logged\n"
-        )
-        current_file.flush()
-        current_file.close()
+        time.gmtime().tm_sec
+    # Set the time for the record
+    rec_time = time.gmtime()
+    timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
+    print("Setting up Serial Port")
+    # Open the serial port and clean the I/O buffer
+    ser = serial.Serial(
+        port,
+        9600,
+        parity=serial.PARITY_EVEN,
+        bytesize=serial.SEVENBITS,
+        rtscts=1,
+        stopbits=2,
+        timeout=3,
+    )
+    ser.flushInput()
+    ser.flushOutput()
+    time.sleep(0.05)
+    # Set concentration to ERROR
+    concentration = -999
+    # Request current reading from the instrument
+    # breakpoint()
+    print("Request concentration")
+    ser.write(b"C\r\n")
+    print("Concentration requested")
+    time.sleep(0.05)
+    # breakpoint()
+    # c_read = Serial_Readline(ser, eol)
+    c_read = ser.readline().strip()
+    json_line = '{"Timestamp":"' + timestamp + '"'
+    json_line = json_line + ',"PMnow":' + eval(c_read)
+    file_line = c_read
+    concentration = eval(c_read)
+    time.sleep(0.05)
+    print(c_read)
+    ser.write(b"#\r\n")
+    c_read = ser.readline().strip()
+    file_line = file_line + "," + c_read
+    json_line = json_line + ',\\"DevStatus\\":' + c_read
+    json_line = json_line + "}"
+    ser.close()  # Close the serial port
+    # Make the line pretty for the file
+    file_line = timestamp + "," + file_line
+    print(file_line)
+    # Save it to the appropriate file
+    current_file_name = datapath + time.strftime("%Y%m%d.txt", rec_time)
+    current_file = open(current_file_name, "a")
+    current_file.write(file_line + "\n")
+    current_file.flush()
+    current_file.close()
+    file_line = ""
+    # Send concentration only data to mqtt_server
+    print("Sending an update!")
+    client.publish(mqtt_topic, json_line)
+# except:
+#     print("ERROR")
+#     current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
+#     current_file = open(current_LOG_name, "a")
+#     current_file.write(
+#         timestamp + " Something unexpected happened and data wasn't logged\n"
+#     )
+#     current_file.flush()
+#     current_file.close()
 print("I'm done now")
 # # Request current 30min reading from the instrument
 # print("Request 30min avg")
