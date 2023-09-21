@@ -150,23 +150,24 @@ while True:
         time.sleep(0.05)
         # breakpoint()
         # c_read = Serial_Readline(ser, eol)
-        c_read = str(ser.readline().strip())
+        c_read = ser.readline().strip().decode('UTF-8')
         json_line = '{"Timestamp":"' + timestamp + '"'
         json_line = json_line + ',"PMnow":' + c_read
         file_line = c_read
         concentration = eval(c_read)
-        time.sleep(0.05)
         print(c_read)
         # Request current air flow rate
         ser.write(b"J2\r\n")
-        c_read = str(ser.readline().strip())
+        time.sleep(0.05)
+        c_read = ser.readline().strip().decode('UTF-8')
         file_line = file_line + "," + c_read
-        json_line = json_line + ',\\"Airflow\\":' + c_read
+        json_line = json_line + ',\"Airflow\":' + c_read
         # Request DevStatus code
         ser.write(b"#\r\n")
-        c_read = str(ser.readline().strip())
+        time.sleep(0.05)
+        c_read = ser.readline().strip().decode('UTF-8')
         file_line = file_line + "," + c_read
-        json_line = json_line + ',\\"DevStatus\\":' + c_read
+        json_line = json_line + ',\"DevStatus\":' + c_read
         json_line = json_line + "}"
         ser.close()  # Close the serial port
         # Make the line pretty for the file
