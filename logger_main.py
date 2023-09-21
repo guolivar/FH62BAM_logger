@@ -96,28 +96,28 @@ eol = b"\r\n"
 # Start the logging
 while True:
     try:
-        # # Get yesterday's date
-        # yesterday = datetime.now() - timedelta(days=1)
-        # filename = yesterday.strftime("%Y%m%d.txt")
-        # filepath = os.path.join(datapath, filename)
-        # print(filepath)
-        # # Check if the file exists
-        # if os.path.exists(filepath):
-        #     # Compress the file
-        #     # Send file for previous day to S3
-        #     gzfile = filepath + ".gz"
-        #     if sys.platform.startswith("linux"):
-        #         subprocess.call(["gzip", filepath])
-        #     elif sys.platform.startswith("win"):
-        #         subprocess.call(["7za", "a", "-tgzip", gzfile, filepath])
-        #     # Upload a new file
-        #     data = open(gzfile, "rb")
-        #     s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
-        #     print(gzfile)
-        #     # Remove the original file
-        #     os.remove(filepath)
-        # else:
-        #     gzfile = "nofile"
+        # Get yesterday's date
+        yesterday = datetime.now() - timedelta(days=1)
+        filename = yesterday.strftime("%Y%m%d.txt")
+        filepath = os.path.join(datapath, filename)
+        print(filepath)
+        # Check if the file exists
+        if os.path.exists(filepath):
+            # Compress the file
+            # Send file for previous day to S3
+            gzfile = filepath + ".gz"
+            if sys.platform.startswith("linux"):
+                subprocess.call(["gzip", filepath])
+            elif sys.platform.startswith("win"):
+                subprocess.call(["7za", "a", "-tgzip", gzfile, filepath])
+            # Upload a new file
+            data = open(gzfile, "rb")
+            s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
+            print(gzfile)
+            # Remove the original file
+            os.remove(filepath)
+        else:
+            gzfile = "nofile"
 
         # Wait until the beginning of the next minute
         while time.gmtime().tm_sec > 0:
@@ -150,15 +150,21 @@ while True:
         time.sleep(0.05)
         # breakpoint()
         # c_read = Serial_Readline(ser, eol)
-        c_read = ser.readline().strip()
+        c_read = str(ser.readline().strip())
         json_line = '{"Timestamp":"' + timestamp + '"'
         json_line = json_line + ',"PMnow":' + c_read
         file_line = c_read
         concentration = eval(c_read)
         time.sleep(0.05)
         print(c_read)
+        # Request current air flow rate
+        ser.write(b"J2\r\n")
+        c_read = str(ser.readline().strip())
+        file_line = file_line + "," + c_read
+        json_line = json_line + ',\\"Airflow\\":' + c_read
+        # Request DevStatus code
         ser.write(b"#\r\n")
-        c_read = ser.readline().strip()
+        c_read = str(ser.readline().strip())
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"DevStatus\\":' + c_read
         json_line = json_line + "}"
