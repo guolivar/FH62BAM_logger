@@ -8,7 +8,7 @@
 # Load the libraries
 import pdb  # Debugger
 import serial  # Serial communications
-import shutil # Moving files
+import shutil  # Moving files
 import time  # Timing utilities
 from datetime import datetime, timedelta
 import subprocess  # Shell utilities ... compressing data files
@@ -33,6 +33,7 @@ def Serial_Readline(_ser, _eol):
     ## Parse the data line
     _line = _bline.decode("utf-8").rstrip()
     return _line
+
 
 ##############################################################
 # AWS bits
@@ -116,7 +117,7 @@ while True:
             # Remove the original file
             os.remove(filepath)
         else:
-            gzfile="nofile"
+            gzfile = "nofile"
         # Wait until the beginning of the next minute
         while time.gmtime().tm_sec > 0:
             time.sleep(0.05)
@@ -146,12 +147,13 @@ while True:
         print("Concentration requested")
         time.sleep(0.05)
         # breakpoint()
-        c_read = Serial_Readline(ser, eol)
-        ser.close() # Close the serial port
-        json_line = '{\"Timestamp\":\"' + timestamp + '\"'
-        json_line = json_line + ',\"PMnow\":' + eval(c_read)
+        # c_read = Serial_Readline(ser, eol)
+        c_read = ser.readline().strip()
+        ser.close()  # Close the serial port
+        json_line = '{"Timestamp":"' + timestamp + '"'
+        json_line = json_line + ',"PMnow":' + eval(c_read)
         file_line = c_read
-        concentration = eval(file_line)
+        concentration = eval(c_read)
         print(c_read)
         json_line = json_line + "}"
         # Make the line pretty for the file
