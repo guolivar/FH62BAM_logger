@@ -8,7 +8,9 @@
 # Load the libraries
 import pdb  # Debugger
 import serial  # Serial communications
+import shutil # Moving files
 import time  # Timing utilities
+from datetime import datetime, timedelta
 import subprocess  # Shell utilities ... compressing data files
 import os, sys  # OS utils to keep working directory
 import json  # To send JSON object to MQTT broker
@@ -31,7 +33,6 @@ def Serial_Readline(_ser, _eol):
     ## Parse the data line
     _line = _bline.decode("utf-8").rstrip()
     return _line
-
 
 ##############################################################
 # AWS bits
@@ -94,6 +95,27 @@ eol = b"\r\n"
 # Start the logging
 while True:
     try:
+        # Get yesterday's date
+        yesterday = datetime.now() - timedelta(days=1)
+        filename = yesterday.strftime("%Y%m%d.txt")
+        filepath = os.path.join(datapath, filename)
+        # Check if the file exists
+        if os.path.exists(filepath):
+            # Compress the file
+            # Send file for previous day to S3
+            gzfile = filepath + ".gz"
+            if sys.platform.startswith("linux"):
+                subprocess.call(["gzip", filepath])
+            elif sys.platform.startswith("win"):
+                subprocess.call(["7za", "a", "-tgzip", gzfile, filepath])
+            # Upload a new file
+            data = open(gzfile, "rb")
+            s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
+            prev_file_name = current_file_name
+            # Move the compressed file to the "processed" folder
+            shutil.move(gzfile, os.path.join(datapath + "processed/", gzfile))
+            # Remove the original file
+            os.remove(filepath)
         # Wait until the beginning of the next minute
         while time.gmtime().tm_sec > 0:
             time.sleep(0.05)
@@ -124,52 +146,12 @@ while True:
         time.sleep(0.05)
         # breakpoint()
         c_read = Serial_Readline(ser, eol)
+        ser.close() # Close the serial port
         json_line = '{\"Timestamp\":\"' + timestamp + '\"'
         json_line = json_line + ',\"PMnow\":' + eval(c_read)
         file_line = c_read
         concentration = eval(file_line)
         print(c_read)
-        # # Request current 30min reading from the instrument
-        # print("Request 30min avg")
-        # ser.write(b"H\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"PM30min\\":' + eval(c_read)
-        # # Request current air flow rate
-        # ser.write(b"J2\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"Airflow\\":' + eval(c_read)
-        # # Request current T1 (sampling head T)
-        # ser.write(b"JB\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"SamplT\\":' + eval(c_read)
-        # # Request current T2 (sampling chamber)
-        # ser.write(b"JC\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"ChambT\\":' + eval(c_read)
-        # # Request current T3 (inside monitor)
-        # ser.write(b"JD\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"MonitT\\":' + eval(c_read)
-        # # Request current T4 (sampling tube)
-        # ser.write(b"JE\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"SampTubeT\\":' + eval(c_read)
-        # # Request current operating flow
-        # ser.write(b"JI\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"CurrFlow\\":' + eval(c_read)
-        # Request device status
-        # ser.write(b"#\r\n")
-        # c_read = Serial_Readline(ser, eol)
-        # file_line = file_line + "," + c_read
-        # json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
         json_line = json_line + "}"
         # Make the line pretty for the file
         file_line = timestamp + "," + file_line
@@ -184,18 +166,6 @@ while True:
         # Send concentration only data to mqtt_server
         print("Sending an update!")
         client.publish(mqtt_topic, json_line)
-        ## Compress data if required
-        # Is it the last minute of the day?
-        if current_file_name != prev_file_name:
-            gzfile = prev_file_name + ".gz"
-            if sys.platform.startswith("linux"):
-                subprocess.call(["gzip", prev_file_name])
-            elif sys.platform.startswith("win"):
-                subprocess.call(["7za", "a", "-tgzip", gzfile, prev_file_name])
-            # Upload a new file
-            data = open(gzfile, "rb")
-            s3.Bucket("odin-daily-data").put_object(Key=mqtt_topic + gzfile, Body=data)
-            prev_file_name = current_file_name
         ser.close()
     except:
         current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
@@ -205,8 +175,45 @@ while True:
         )
         current_file.flush()
         current_file.close()
-        # Wait until the beginning of the next minute
-        while time.gmtime().tm_sec > 0:
-            time.sleep(0.05)
-            time.gmtime().tm_sec
 print("I'm done now")
+# # Request current 30min reading from the instrument
+# print("Request 30min avg")
+# ser.write(b"H\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"PM30min\\":' + eval(c_read)
+# # Request current air flow rate
+# ser.write(b"J2\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"Airflow\\":' + eval(c_read)
+# # Request current T1 (sampling head T)
+# ser.write(b"JB\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"SamplT\\":' + eval(c_read)
+# # Request current T2 (sampling chamber)
+# ser.write(b"JC\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"ChambT\\":' + eval(c_read)
+# # Request current T3 (inside monitor)
+# ser.write(b"JD\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"MonitT\\":' + eval(c_read)
+# # Request current T4 (sampling tube)
+# ser.write(b"JE\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"SampTubeT\\":' + eval(c_read)
+# # Request current operating flow
+# ser.write(b"JI\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"CurrFlow\\":' + eval(c_read)
+# Request device status
+# ser.write(b"#\r\n")
+# c_read = Serial_Readline(ser, eol)
+# file_line = file_line + "," + c_read
+# json_line = json_line + ',\\"DevStatus\\":' + eval(c_read)
