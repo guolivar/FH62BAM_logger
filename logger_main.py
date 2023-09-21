@@ -134,6 +134,7 @@ while True:
             bytesize=serial.SEVENBITS,
             rtscts=1,
             stopbits=2,
+            timeout=3,
         )
         ser.flushInput()
         ser.flushOutput()
@@ -149,7 +150,6 @@ while True:
         # breakpoint()
         # c_read = Serial_Readline(ser, eol)
         c_read = ser.readline().strip()
-        ser.close()  # Close the serial port
         json_line = '{"Timestamp":"' + timestamp + '"'
         json_line = json_line + ',"PMnow":' + eval(c_read)
         file_line = c_read
@@ -160,6 +160,7 @@ while True:
         file_line = file_line + "," + c_read
         json_line = json_line + ',\\"DevStatus\\":' + c_read
         json_line = json_line + "}"
+        ser.close()  # Close the serial port
         # Make the line pretty for the file
         file_line = timestamp + "," + file_line
         print(file_line)
@@ -173,7 +174,6 @@ while True:
         # Send concentration only data to mqtt_server
         print("Sending an update!")
         client.publish(mqtt_topic, json_line)
-        ser.close()
     except:
         current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
         current_file = open(current_LOG_name, "a")
