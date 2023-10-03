@@ -50,23 +50,30 @@ while True:
         rec_time = time.gmtime()
         timestamp = time.strftime("%Y/%m/%dT%H:%M:%S GMT", rec_time)
         print("Setting up Serial Port")
-        ser = serial.Serial(port,9600,parity=serial.PARITY_EVEN,bytesize=serial.SEVENBITS,stopbits=2,timeout=3)
+        ser = serial.Serial(
+            port,
+            9600,
+            parity=serial.PARITY_EVEN,
+            bytesize=serial.SEVENBITS,
+            stopbits=2,
+            timeout=3,
+        )
         ser.reset_input_buffer()
         ser.reset_output_buffer()
         buff = ser.readline().strip()
-        while (len(buff)>0):
+        while len(buff) > 0:
             buff = ser.readline().strip()
             print(buff)
         print(ser.write(b"C\r\n"))
-        concentration = ser.readline().strip().decode('UTF-8')
+        concentration = ser.readline().strip().decode("UTF-8")
         print(concentration)
         print(ser.write(b"#\r\n"))
-        devstatus = ser.readline().strip().decode('UTF-8')
+        devstatus = ser.readline().strip().decode("UTF-8")
         print(devstatus)
         ser.close()
         json_line = '{"Timestamp":"' + timestamp + '"'
         json_line = json_line + ',"PMnow":' + concentration
-        json_line = json_line + ',\"DevStatus\":' + devstatus
+        json_line = json_line + ',"DevStatus":' + devstatus
         json_line = json_line + "}"
         # Make the line pretty for the file
         file_line = timestamp + "," + concentration + "," + devstatus
@@ -78,9 +85,11 @@ while True:
         current_file.flush()
         current_file.close()
         # Send concentration only data to mqtt_server
+        # Start the MQTT client
+        client = mqtt.Client()
+        client.connect(mqtt_server, 1883)
         print("Sending an update!")
         client.publish(mqtt_topic, json_line)
-        print("Update sent")
     except:
         print("ERROR")
         current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
