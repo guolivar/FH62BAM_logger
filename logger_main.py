@@ -4,6 +4,7 @@ import time  # Timing utilities
 from datetime import datetime, timedelta
 import json  # To send JSON object to MQTT broker
 import paho.mqtt.client as mqtt  # MQTT publishing
+import psycopg2
 
 # Set the time constants
 rec_time = time.gmtime()
@@ -40,6 +41,14 @@ client = mqtt.Client()
 client.connect(mqtt_server, 1883)
 # Close the settings file
 settings_file.close()
+# Database connection
+connection = psycopg2.connect(
+    user = "your_username",
+    password = "your_password",
+    host = "localhost",
+    port = "5432",
+    database = "your_database"
+)
 
 while True:
     try:
@@ -90,6 +99,38 @@ while True:
         client.connect(mqtt_server, 1883)
         print("Sending an update!")
         client.publish(mqtt_topic, json_line)
+        # Send data to database -- NOT READY FOR USE!!!!
+        # Establish a connection to the database
+        try:
+            connection = psycopg2.connect(
+                user = "your_username",
+                password = "your_password",
+                host = "localhost",
+                port = "5432",
+                database = "your_database"
+            )
+
+            cursor = connection.cursor()
+
+            # Create a new record
+            postgres_insert_query = """ INSERT INTO table_name (column1, column2) VALUES (%s,%s)"""
+            record_to_insert = ('value1', 'value2')
+            cursor.execute(postgres_insert_query, record_to_insert)
+
+            connection.commit()
+            count = cursor.rowcount
+            print(count, "Record inserted successfully into table")
+
+        except (Exception, psycopg2.Error) as error :
+            if(connection):
+                print("Failed to insert record into table", error)
+
+        finally:
+            # Close the database connection
+            if(connection):
+                cursor.close()
+                connection.close()
+                print("PostgreSQL connection is closed")
     except:
         print("ERROR")
         current_LOG_name = datapath + time.strftime("%Y%m%d.LOG", rec_time)
